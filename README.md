@@ -1,0 +1,1 @@
+This is a copy of the bower_component dependencies that work with the ike wai gateway. Current bower/yarn will not install all the dependencies correctly so a copy of them is here that can be pulled down to ensure a working gateway deployment. 
