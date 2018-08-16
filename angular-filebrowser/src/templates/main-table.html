@@ -1,0 +1,173 @@
+<table class="table mb0 table-files table-striped table-bordered table-hover">
+    <thead>
+        <tr>
+           <th class="col-md-2 text-center" ng-if="!config.allowedActions.agaveUpload && !config.allowedActions.agaveSelect && system.default">
+                <input type="checkbox" ng-click="checkAll = !checkAll; checkAllFiles(checkAll);">
+                <div class="btn-group" ng-show="fileNavigator.fileListSelected.length !== 0">
+                    <a class="btn btn-outline" href="#" data-toggle="dropdown">
+                        <strong>Actions</strong>
+                        <i class="fa fa-angle-down"></i>
+                    </a>
+                    <ul class="dropdown-menu">
+                     <li ng-if="!app.available && system.default">
+                          <a ng-click="metadataFiles(fileNavigator.fileListSelected)"> <i class="fa fa-tag"></i> Annotate Files</a>
+                      </li>
+                        <li ng-if="!app.available && system.default">
+                            <a ng-click="stageFilesForRepo(fileNavigator.fileListSelected)"> <i class="fa fa-star-half-o"></i> Stage/Unstage For Repository</a>
+                        </li>
+                        <li ng-show="config.allowedActions.move && system.default">
+                                        <a href="" tabindex="-1" data-toggle="modal" data-target="#groupfilesmove" ng-click="getMoveSystems()">
+                                            <i class="fa fa-folder-open-o"></i> {{'move' | translate}}
+                                        </a>
+                        </li>
+                        <!--
+                        <li ng-if="!app.available">
+                            <a ng-click="downloadFiles(fileNavigator.fileListSelected)"> <i class="fa fa-download"></i> Download</a>
+                        </li>-->
+                        <li ng-if="system.default">
+                            <a data-toggle="modal" data-target="#group-delete-files" > <i class="fa fa-trash"></i> Delete </a>
+                        </li>
+                    </ul>
+                </div>
+            </th>
+            <th class="col-md-4">
+                <a href="" ng-click="order('model.name')">
+                    {{"name" | translate}}
+                    <span class="sortorder" ng-show="predicate[1] === 'model.name'" ng-class="{reverse:reverse}"></span>
+                </a>
+            </th>
+            <th class="col-md-2 hidden-xs">
+                <a href="" ng-click="order('model.size')">
+                    {{"size" | translate}}
+                    <span class="sortorder" ng-show="predicate[1] === 'model.size'" ng-class="{reverse:reverse}"></span>
+                </a>
+            </th>
+            <th class="col-md-4 hidden-sm hidden-xs">
+                <a href="" ng-click="order('model.date')">
+                    {{"Last Modified" | translate}}
+                    <span class="sortorder" ng-show="predicate[1] === 'model.date'" ng-class="{reverse:reverse}"></span>
+                </a>
+            </th>
+            <!--
+            <th class="col-md-4 hidden-sm hidden-xs">
+                <a href="">
+                    {{"UUID" | translate}}
+                </a>
+            </th>
+             -->
+
+            <th ng-if="fileNavigator.fileList[0].model.system.default" class="col-md-4 hidden-sm hidden-xs">
+                <a href="">
+                    {{"Status" | translate}}
+                </a>
+            </th>
+
+            <!-- <th class="text-right" ng-if="config.allowedActions.agaveUpload && config.allowedActions.agaveSelect">Actions</th> -->
+            <th class="text-center" ng-if="config.allowedActions.agaveSelect">Select</th>
+            <th width="10%" class="text-center"> Actions</th>
+        </tr>
+    </thead>
+    <tbody class="file-item">
+        <tr ng-show="fileNavigator.requesting">
+            <td colspan="5">
+                <div ng-include="config.tplPath + '/spinner.html'"></div>
+            </td>
+        </tr>
+        <tr ng-show="!fileNavigator.requesting && fileNavigator.fileList.length <= 1 && !fileNavigator.error">
+            <td colspan="5">
+                {{"no_files_in_folder" | translate}}...
+            </td>
+        </tr>
+        <tr ng-show="!fileNavigator.requesting && fileNavigator.error">
+            <td colspan="5">
+                {{ fileNavigator.error }}
+            </td>
+        </tr>
+        <tr ng-repeat="item in fileNavigator.fileList | filter: query | orderBy:predicate:reverse" ng-show="!fileNavigator.requesting && !item.model.root">
+            <td class="text-center" ng-if="!config.allowedActions.agaveUpload && !config.allowedActions.agaveSelect && system.default">
+              <label title="Download">
+                <input type="checkbox" data-checklist-model="fileNavigator.fileListSelected" data-checklist-value="item" ng-disabled="item.model.type === 'dir'">
+              </label>
+            </td>
+            <td ng-right-click="touch(item)" ng-click="touch(item)">
+                <a href="" ng-show="item.model.type === 'dir'" ng-click="smartClick(item)" title="{{item.model.name}} ({{item.model.sizeKb()}}kb)" title="{{ item.model.name }}">
+                    <i class="fa fa-folder mr2"></i>
+                    <i class="fa {{ item.model.name | fileIcon }} mr2" ng-show="item.model.type === 'file'"></i>
+                    {{item.model.name | strLimit : 64}}
+                </a>
+                <span ng-show="item.model.type === 'file'">
+                  <i class="fa {{ item.model.name | fileIcon }} mr2" ></i>
+                  <span ng-show="config.allowedActions.preview && item.isPreviewable()">
+                    <a href="" tabindex="-1" data-toggle="modal" data-target="#preview" ng-click="item.download(true)">
+                        <i class="fa fa-eye"></i> {{item.model.name | strLimit : 64}}
+                    </a>
+                  </span>
+                  <span ng-show="!config.allowedActions.preview || !item.isPreviewable()">
+                    {{item.model.name | strLimit : 64}}
+                  </span>
+                </span>
+            </td>
+            <td class="hidden-xs" ng-show="item.model.type === 'dir'">
+                &nbsp;
+            </td>
+            <td class="hidden-xs" ng-show="item.model.type === 'file'">
+                {{ item.model.size | humanSize:1:true }}
+            </td>
+            <!-- <td class="hidden-sm hidden-xs" am-time-ago="item.model.date"> -->
+            <td class="hidden-sm hidden-xs" ng-show="item.model.type === 'file'">
+              <time>{{ item.model.date | amDateFormat: 'YYYY-MM-DD, h:mm a' }}</time>
+            </td>
+            <td class="hidden-sm hidden-xs" ng-show="item.model.type === 'dir'">
+            </td>
+            <!--
+            <td class="hidden-sm hidden-xs" >
+              {{ item.model.uuid}}
+            </td>
+            -->
+
+            <td ng-if="item.model.system.default" class="hidden-sm hidden-xs" >
+              <span class="badge badge-info" ng-if="staged_filenames.indexOf(item.model._links.self.href) >= 0">Staged</span>
+              <!--
+              <span class="badge badge-warning" ng-if="rejected_filenames.indexOf(item.model._links.self.href) >= 0">
+               <label class="control-label pull-left" data-toggle="tooltip" title='{{rejected_reasons[rejected_filenames.indexOf(item.model._links.self.href)]}}'>Please Revise</label>
+              </span>
+              -->
+              <span ng-if="rejected_filenames.indexOf(item.model._links.self.href) >= 0">
+                <button type="button" data-toggle="popover" data-content='{{rejected_reasons[rejected_filenames.indexOf(item.model._links.self.href)]}}' class="badge badge-warning btn">
+                    <label class="control-label pull-left" data-toggle="tooltip" title='{{rejected_reasons[rejected_filenames.indexOf(item.model._links.self.href)]}}'>
+                        Please Revise
+                    </label>
+                </button>
+              </span>
+              <script>
+                $(document).ready(function(){
+                    $('[data-toggle="popover"]').popover();
+                });
+              </script>
+              <span class="badge badge-success" ng-if="published_filenames.indexOf(item.model._links.self.href) >= 0">Annotated</span>
+            </td>
+            <!-- <td class="text-right" ng-if="config.allowedActions.agaveUpload && config.allowedActions.agaveSelect">
+                <div ng-include="config.tplPath + '/item-toolbar.html'"></div>
+            </td> -->
+            <td class="text-center" ng-if="config.allowedActions.agaveSelect">
+              <label title="select">
+                <button class="btn btn-sm btn-default" ng-click="selectItem(item)">
+                    <i class="fa fa-hand-pointer-o"></i> {{"select_this" | translate}}
+                </button>
+              </label>
+            </td>
+
+            <td class="text-center" ng-click="touch(item)">
+               <div ng-if="item.model.type === 'file' || system.default" class="btn-group" class="btn-group">
+                   <a class="btn red btn-outline" href="#" data-toggle="dropdown">
+                       Actions
+                       <i class="fa fa-angle-down"></i>
+                   </a>
+                   <ul class="dropdown-menu pull-right" role="menu" ng-include="config.tplPath + '/item-context-menu-items.html'"></ul>
+               </div>
+           </td>
+
+        </tr>
+    </tbody>
+
+</table>

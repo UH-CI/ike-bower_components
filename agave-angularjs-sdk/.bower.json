@@ -1,0 +1,13 @@
+{
+  "name": "agave-angularjs-sdk",
+  "homepage": "https://github.com/UH-CI/uh-agave-anguler-sdk",
+  "_release": "968e8db1f1",
+  "_resolution": {
+    "type": "branch",
+    "branch": "dev",
+    "commit": "968e8db1f1faa770c41f006af21660160fde2c53"
+  },
+  "_source": "https://github.com/UH-CI/uh-agave-anguler-sdk.git",
+  "_target": "dev",
+  "_originalSource": "git+https://github.com/UH-CI/uh-agave-anguler-sdk.git"
+}
