@@ -28,11 +28,11 @@
     "ng-file-upload": "^12.0.1",
     "checklist-model": "0.9.0"
   },
-  "_release": "93d334748b",
+  "_release": "bcc2f5808c",
   "_resolution": {
     "type": "branch",
     "branch": "metadata-ui",
-    "commit": "93d334748bb660f7d2d70c0b3882cc47dd44b9c6"
+    "commit": "bcc2f5808cbba2dffa0397cc21e318c9a776074d"
   },
   "_source": "https://github.com/UH-CI/uh-togo-angular-filemanager.git",
   "_target": "metadata-ui",

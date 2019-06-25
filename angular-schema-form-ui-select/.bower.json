@@ -5,7 +5,7 @@
     "angular-underscore.js",
     "bootstrap-ui-select.min.js"
   ],
-  "version": "0.1.1",
+  "version": "0.1.0",
   "authors": [
     "Cheng Zhu<cheng@aqmin.com>",
     "Steve Hu <stevehu@gmail.com>"
@@ -41,14 +41,14 @@
     "angular-schema-form": ">= 0.7",
     "angular-mocks": ">= 1.2"
   },
-  "homepage": "https://github.com/networknt/angular-schema-form-ui-select",
-  "_release": "0.1.1",
+  "homepage": "https://github.com/deardooley/angular-schema-form-ui-select",
+  "_release": "0.1.0",
   "_resolution": {
     "type": "version",
-    "tag": "0.1.1",
-    "commit": "826e49e9f5e5c82f9ef8a57edfd608b14fa98743"
+    "tag": "0.1.0",
+    "commit": "c2f2501c60d496ab5897b06267130da659f2abde"
   },
-  "_source": "https://github.com/networknt/angular-schema-form-ui-select.git",
-  "_target": "~0.1.1",
-  "_originalSource": "angular-schema-form-ui-select"
+  "_source": "https://github.com/deardooley/angular-schema-form-ui-select.git",
+  "_target": "*",
+  "_originalSource": "git+https://github.com/deardooley/angular-schema-form-ui-select"
 }

@@ -1,13 +1,13 @@
 (function(window, angular, $) {
     "use strict";
     angular.module('FileManagerApp').controller('FileManagerCtrl', [
-    '$scope', '$state', '$q','$rootScope', '$translate', '$cookies', '$filter', '$ocLazyLoad', 'fileManagerConfig', 'fileItem', 'fileNavigator', 'fileUploader','Commons', 'FilesController', 'SystemsController','MetaController',
-        function($scope, $state, $q, $rootScope, $translate, $cookies, $filter, $ocLazyLoad, fileManagerConfig, fileItem, FileNavigator, FileUploader, Commons, FilesController, SystemsController,MetaController) {
+    '$scope', '$state', '$q','$rootScope', '$localStorage','$translate', '$cookies', '$filter', '$ocLazyLoad', 'fileManagerConfig', 'fileItem', 'fileNavigator', 'fileUploader','Commons', 'FilesController', 'SystemsController','MetaController',
+        function($scope, $state, $q, $rootScope, $localStorage, $translate, $cookies, $filter, $ocLazyLoad, fileManagerConfig, fileItem, FileNavigator, FileUploader, Commons, FilesController, SystemsController,MetaController) {
         $scope.config = fileManagerConfig;
         $scope.appName = fileManagerConfig.appName;
         $scope.modes = ['Javascript', 'Shell', 'XML', 'Markdown', 'CLike', 'Python'];
         $scope.cmMode = '';
-
+        $scope.email = $localStorage.activeProfile.email;;
         $scope.cmOptions = {
             lineWrapping: true,
             lineNumbers: true,
@@ -47,12 +47,29 @@
         $scope.uploadFileList = [];
         $scope.viewTemplate = $cookies.viewTemplate || 'main-table.html';
 
+        $scope.getUsername = function() {
+          return $rootScope.username;
+        }
+
+        $scope.getEmail = function(){
+          return $localStorage.activeprofile.email;
+        }
+
+        $scope.isAdminUser = function() {
+            var adminList = ['seanbc','jgeis','omeier','ike-admin'];
+            if (adminList.indexOf($scope.getUsername()) >= 0) {
+              return true;
+            }
+            return false;
+        }
+
         $scope.get_staged_uuids = function(){
           MetaController.listMetadata("{'name':{'$in':['stagged','staged']}}")
             .then(function(response){
               $scope.staged_filenames =[]
               angular.forEach(response.result[0]._links.associationIds, function(file){
-                $scope.staged_filenames.push(file.href)
+                //console.log("get_staged_uuids: " + file.href);
+                $scope.staged_filenames.push(encodeURI(file.href));
               })
             })
         }
@@ -63,7 +80,7 @@
               $scope.published_uuids =  response.result[0].associationIds;
               $scope.published_filenames =[]
               angular.forEach(response.result[0]._links.associationIds, function(file){
-                $scope.published_filenames.push(file.href)
+                $scope.published_filenames.push(encodeURI(file.href))
               })
             })
         }
@@ -73,13 +90,28 @@
             .then(function(response){
               $scope.rejected_filenames =[]
               angular.forEach(response.result[0]._links.associationIds, function(file){
-                $scope.rejected_filenames.push(file.href);
+                $scope.rejected_filenames.push(encodeURI(file.href));
               });
               $scope.rejected_reasons = [];
               angular.forEach(response.result[0].value.reasons, function(reason){
                 $scope.rejected_reasons.push(reason);
               });
             })
+        }
+
+        $scope.isRejected = function(item) {
+          //console.log("isRejected: " + item);
+          return $scope.rejected_filenames.indexOf(item) >= 0;
+        }
+
+        $scope.isPublished = function(item) {
+          //console.log("isPublished: " + item);
+          return $scope.published_filenames.indexOf(item) >= 0;
+        }
+
+        $scope.isStaged = function(item) {
+          //console.log("isStaged: " + item);
+          return $scope.staged_filenames.indexOf(item) >= 0;
         }
 
         $scope.get_staged_uuids();
@@ -221,7 +253,7 @@
           // tell the user a file with the same name already exists in that location.
             var origFullPath = item.model.path.join('/') + "/" + item.model.name;
             var newFullPath = item.tempModel.path.join('/') + "/" + item.tempModel.name;
-            if (item.isFolder() && newFullPath.startsWith(origFullPath)) {
+            if (item.isFolder() && newFullPath.startsWith(origFullPath + "/")) {
             	item.error = $translate.instant('error_cant_nest_folder_in_itself');
             }
             else {
@@ -259,7 +291,7 @@
             var origFullPath = item.model.path.join('/') + "/" + item.model.name;
             var newFullPath = item.tempModel.path.join('/') + "/" + item.tempModel.name;
             // it works if you try to copy a folder into itself, but gives a weird error message, for now, don't allow
-            if (item.isFolder() && newFullPath.startsWith(origFullPath)) {
+            if (item.isFolder() && newFullPath.startsWith(origFullPath + "/")) {
             	item.error = $translate.instant('error_cant_nest_folder_in_itself');
             }
   	        FilesController.listFileItems(item.tempModel.system.id, newFullPath, 999999, 0)
@@ -457,10 +489,15 @@
           var uuids = [];
           $scope.requesting = true;
           $scope.fileNavigator.requesting = true;
-          FilesController.indexFileItems(model.system.id,model.path[0]+'/'+model.name,1,0)
+          var path = model.name;
+          if (model.path.length > 0) {
+            path = model.fullPath();
+            path = path.substr(1);
+          }
+          FilesController.indexFileItems(model.system.id,path,1,0)
           .then(function(response){
               uuids.push(response[0].uuid)
-              $scope.fileUploader.stageForRepo(uuids).then(function(){})
+              $scope.fileUploader.stageForRepo(uuids, $scope.email ).then(function(){})
           },function(response){
             $scope.requesting = false;
             $scope.fileNavigator.requesting = false;
@@ -470,7 +507,12 @@
         $scope.stageFilesForRepo = function(fileListSelected){
           var uuids = [];
           angular.forEach(fileListSelected, function(file){
-            FilesController.indexFileItems(file.model.system.id,file.model.path+'/'+file.model.name,1,0)
+            var path = file.model.name;
+            if (file.model.path.length > 0) {
+              path = file.model.fullPath();
+              path = path.substr(1);
+            }
+            FilesController.indexFileItems(file.model.system.id,path,1,0)
             .then(function(response){
               uuids.push(response[0].uuid)
               $scope.fileUploader.stageForRepo(uuids).then(function(){})
@@ -556,7 +598,7 @@
             $scope.get_staged_uuids();
             $scope.get_published_uuids();
             $scope.get_rejected_uuids();
-            $scope.fileNavigator = new FileNavigator($scope.system, $scope.$parent.$parent.path);
+            //$scope.fileNavigator = new FileNavigator($scope.system, $scope.$parent.$parent.path);
             $scope.fileNavigator.refresh();
         });
 
